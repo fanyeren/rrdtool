@@ -41,7 +41,7 @@ string_arr string_arr_new(
     a.len = RARRAY_LEN(rb_strings) + 1;
 
     a.strings = malloc(a.len * sizeof(char *));
-    a.strings[0] = "dummy"; /* first element is a dummy element */
+    memcpy(a.strings[0], "dummy", a.len); /* first element is a dummy element */
 
     for (i = 0; i < a.len - 1; i++) {
         VALUE     v = rb_ary_entry(rb_strings, i);
@@ -56,7 +56,7 @@ string_arr string_arr_new(
             break;
         default:
             rb_raise(rb_eTypeError,
-                     "invalid argument - %s, expected T_STRING or T_FIXNUM on index %ld",
+                     "invalid argument - %ld, expected T_STRING or T_FIXNUM on index %d",
                      (long)rb_class2name(CLASS_OF(v)), i);
             break;
         }
@@ -231,7 +231,7 @@ VALUE rb_rrd_fetch(
     VALUE args)
 {
     string_arr a;
-    unsigned long i, j, k, step, ds_cnt;
+    long i, j, k, step, ds_cnt;
     rrd_value_t *raw_data;
     char    **raw_names;
     VALUE     data, names, result;
@@ -239,8 +239,7 @@ VALUE rb_rrd_fetch(
 
     a = string_arr_new(args);
     reset_rrd_state();
-    rrd_fetch(a.len, a.strings, &start, &end, &step, &ds_cnt, &raw_names,
-              &raw_data);
+    rrd_fetch(a.len, a.strings, &start, &end, (unsigned long *)&step, (unsigned long *)&ds_cnt, &raw_names, &raw_data);
     string_arr_delete(a);
 
     RRD_CHECK_ERROR names = rb_ary_new();
@@ -325,7 +324,7 @@ VALUE rb_rrd_xport(
     VALUE args)
 {
     string_arr a;
-    unsigned long i, j, k, step, col_cnt;
+    long i, j, k, step, col_cnt;
     int xxsize;
     rrd_value_t *data;
     char **legend_v;
@@ -334,7 +333,7 @@ VALUE rb_rrd_xport(
 
     a = string_arr_new(args);
     reset_rrd_state();
-    rrd_xport(a.len, a.strings, &xxsize, &start, &end, &step, &col_cnt, &legend_v, &data);
+    rrd_xport(a.len, a.strings, &xxsize, &start, &end, (unsigned long *)&step, (unsigned long *)&col_cnt, &legend_v, &data);
     string_arr_delete(a);
 
     RRD_CHECK_ERROR;
